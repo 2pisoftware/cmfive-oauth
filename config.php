@@ -1,43 +1,45 @@
 <?php
-Config::set('oauth', array(
+Config::set(
+  'oauth',
+  [
     'active' => true,
     'path' => 'modules',
     'topmenu' => false,
     'dependencies' => [
-        'aws/aws-sdk-php' => '^3.55'
+      'aws/aws-sdk-php' => '^3.55'
     ],
     'hooks' => [
-        'auth',
-        'tokens',
-        'oauth'
+      'auth',
+      'tokens',
+      'oauth'
     ],
     'apps' => [
-        'cognito' => [
-            // 'client_id#1' => [
-            //     'client_secret' => "abcdeXYZ123",
-            //     'title' => "MyAppIsCalled",
-            //     'domain' => "2pi-something.somewhere.auth.ap-southeast-2.amazoncognito.com",
-            //     'scope' => "asSetForApp",
-            //     'callback' => "https://pi-HostingSomething.somewhere/oauth/flowsubmit",
-            //     'splashpage' => "TemplateTitle" (module:oauth, category:splashpage)
-            // ],
-            // 'client_id#2' => [
-            //     'client_secret' => "abcdeXYZ123",
-            //     'title' => "MyOtherAppIsCalled",
-            //     'domain' => "2pi-something.somewhere.auth.ap-southeast-2.amazoncognito.com",
-            //     'scope' => "asSetForApp2",
-            //     'callback' => "https://pi-HostingSomething.somewhere/oauth/flowsubmit",
-            //     'splashpage' => "IgnoreIfYouJustWantJsonReturn" (module:oauth, category:splashpage)
-            // ],
-            ],
-
-        ]
-    ],
-));
+      'cognito' => [
+        // 'client_id#1' => [
+        //     'client_secret' => "abcdeXYZ123",
+        //     'title' => "MyAppIsCalled",
+        //     'domain' => "2pi-something.somewhere.auth.ap-southeast-2.amazoncognito.com",
+        //     'scope' => "asSetForApp",
+        //     'callback' => "https://pi-HostingSomething.somewhere/oauth/flowsubmit",
+        //     'splashpage' => "TemplateTitle" (module:oauth, category:splashpage)
+        // ],
+        // 'client_id#2' => [
+        //     'client_secret' => "abcdeXYZ123",
+        //     'title' => "MyOtherAppIsCalled",
+        //     'domain' => "2pi-something.somewhere.auth.ap-southeast-2.amazoncognito.com",
+        //     'scope' => "asSetForApp2",
+        //     'callback' => "https://pi-HostingSomething.somewhere/oauth/flowsubmit",
+        //     'splashpage' => "IgnoreIfYouJustWantJsonReturn" (module:oauth, category:splashpage)
+        // ],
+      ],
+    ]
+  ]
+);
 
 /*
 /////////
 // 'splashpage' => "Prover" -> templates -> oauth -> splashpage
+// A simple splash coordinating Cognito biased returns
 /////////
 <div>
 <br><br>
