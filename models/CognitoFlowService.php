@@ -104,7 +104,6 @@ class CognitoFlowService extends DbService
             'redirect_uri' => $app['callback'],
             'code' => $requested['code'],
             'code_verifier' => $known->pkce_verifier,
-
         ]);
 
         if ($cognito->failCount() > 0) {
@@ -118,11 +117,8 @@ class CognitoFlowService extends DbService
             return null;
         }
 
-        foreach(($tokenSet['user_data']['UserAttributes'] ?? null) as $att ) {
-            if ($att['Name'] == "email"){
-                $tokenSet['email'] = $att['Value'];
-            }
-        }
+        $tokenSet['email'] = $cognito->searchUserAttributes(($tokenSet['user_data']['UserAttributes'] ?? null), 'email');
+        $tokenSet['auth_user'] = $cognito->searchUserAttributes(($tokenSet['user_data']['UserAttributes'] ?? null), 'custom:global_user_id');
 
         // Usefully returns: [ "access_token" => ..... , "user_data" => as_below , "email" => ifFound]
         return $tokenSet;

@@ -32,25 +32,44 @@ function flowsubmit_ALL(Web $w)
                 ApiOutputService::getInstance($w)->apiFailMessage("oauth flow response", "Client conflict");
             }
 
+            $payload = TokensService::getInstance($w)->getJwtPayload($check['access_token']);
+            $userDisplay = $payload["username"] ?? null;
+            $userDisplay .= (empty($check['email'])) ? "" : ((empty($userDisplay)) ? "" : ":" . $check['email']);
+            $grant =                 [
+                "bearer" => $userDisplay,
+                "app" => $app,
+                "flow" => $check,
+                "payload" => $payload
+            ];
+            
+            // the app's config PHP might want this to be a cmfive login! (piggybacked on token)
+            if ($app['login']) {
+                $sessionUser = AuthService::getInstance($w)->getUser($check['auth_user'] ?? null);
+                if (empty($sessionUser) || ($sessionUser->login !== $payload["username"])) {
+                    ApiOutputService::getInstance($w)->apiFailMessage("oauth flow response", "Flow is invalid");
+                }
+                AuthService::getInstance($w)->forceLogin($sessionUser->id);
+                // if we're redirecting, we don't want token splattered over URL params!
+                // So, we can stash into session ...
+                $w->session('oauth_grant_bundle', $grant);
+                if ($app['redirect']) {
+                    $w->redirect($app['redirect']);
+                }
+            }
+
+            // the app's config PHP might want tidy exchange of token, let's have a template
             if (!empty($app['splashpage'])) {
-                $payload = TokensService::getInstance($w)->getJwtPayload($check['access_token']);
-                $userDisplay = $payload["username"] ?? null;
-                $userDisplay .= (empty($check['email'])) ? "" : ((empty($userDisplay)) ? "" : " : " . $check['email']);
                 $template = OauthFlowService::getInstance($w)->getOauthSplashPageTemplate($app['splashpage']);
                 if (!empty($template)) {
                     $splashPage = TemplateService::getInstance($w)->render(
                         $template->id,
-                        [
-                            "display" => $userDisplay,
-                            "app" => $app,
-                            "jwt" => $check,
-                            "payload" => $payload
-                        ]
+                        $grant
                     );
                     ApiOutputService::getInstance($w)->apiReturnCmfiveStyledHtml($w, $splashPage);
                 }
             }
 
+            // otherwise, the app will have to settle for raw exchange of token, as basic json
             ApiOutputService::getInstance($w)->apiKeyedResponse($check, "Application API key granted for " . $app['title']);
         }
     }

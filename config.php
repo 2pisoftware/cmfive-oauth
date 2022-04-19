@@ -21,6 +21,8 @@ Config::set(
         //     'domain' => "2pi-something.somewhere.auth.ap-southeast-2.amazoncognito.com",
         //     'scope' => "asSetForApp",
         //     'callback' => "https://pi-HostingSomething.somewhere/oauth/flowsubmit",
+        //     'login' => true/false if avails user to FORCE_LOGIN (cmfive),
+        //     'redirect' => final landing page (as opposed to 'flowsubmit' JSON or splashpageTemplate),
         //     'splashpage' => "TemplateTitle" (module:oauth, category:splashpage)
         // ],
         // 'client_id#2' => [
@@ -29,6 +31,8 @@ Config::set(
         //     'domain' => "2pi-something.somewhere.auth.ap-southeast-2.amazoncognito.com",
         //     'scope' => "asSetForApp2",
         //     'callback' => "https://pi-HostingSomething.somewhere/oauth/flowsubmit",
+        //     'login' => true/false if avails user to FORCE_LOGIN (cmfive),
+        //     'redirect' => final landing page (as opposed to 'flowsubmit' JSON or splashpageTemplate),
         //     'splashpage' => "IgnoreIfYouJustWantJsonReturn" (module:oauth, category:splashpage)
         // ],
       ],
@@ -38,7 +42,7 @@ Config::set(
 
 /*
 /////////
-// 'splashpage' => "Prover" -> templates -> oauth -> splashpage
+// example: 'splashpage' => "Prover" -> templates -> oauth -> splashpage
 // A simple splash coordinating Cognito biased returns
 /////////
 <div>
@@ -53,14 +57,14 @@ Config::set(
   Grants access for:
 </h2>
 <h1 align="center">
-    {{display}}
+    {{bearer}}
 </h1>
 <h2 align="center">
   Token is:
 </h2>
 <div style="padding: 0 20% 0 20%;">
   <code style="display: block;overflow-wrap: break-word;text-align: left;">
-    {{jwt["access_token"]}}
+    {{flow["access_token"]}}
   </code>
 </div>
 <br>

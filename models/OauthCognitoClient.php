@@ -82,12 +82,12 @@ class OauthCognitoClient extends DbService
     }
 
 
-    
+
     public function getUserByAccessToken($accessToken)
     {
         try {
             $this->makeWarningsCritical();
-            
+
             $results = $this->_system->getUser([
                 'AccessToken' => $accessToken, // REQUIRED
             ]);
@@ -97,7 +97,7 @@ class OauthCognitoClient extends DbService
             if (empty($results)) {
                 return null;
             }
-            
+
             return $results;
         } catch (Exception $ex) {
             $this->makeWarningsSafe();
@@ -107,6 +107,15 @@ class OauthCognitoClient extends DbService
         }
     }
 
+    public function searchUserAttributes($attributes, $find)
+    {
+        foreach ($attributes as $att) {
+            if ($att['Name'] == $find) {
+                return $att['Value'];
+            }
+        }
+        return null;
+    }
 
     public function getSystem()
     {
@@ -115,17 +124,17 @@ class OauthCognitoClient extends DbService
 
             // get aws client system
             $CognitoClient =  new AwsCognitoClient(
-                [ 
-                // 'credentials' => [
-                //     'key' => '',
-                //     'secret' => '/i+kFWAeyAGfL',
-                // ],
-                'region' => 'ap-southeast-2',
-                'version' => 'latest',
-                
-                // 'app_client_id' => 'xxxyyyzzz',
-                // 'app_client_secret' => 'xxxyyyzzz',
-                // 'user_pool_id' => 'userPool',
+                [
+                    //  'credentials' => [
+                    //     'key' => '',
+                    //     'secret' => '+',
+                    // ],
+                    'region' => 'ap-southeast-2',
+                    'version' => 'latest',
+
+                    // 'app_client_id' => 'xxxyyyzzz',
+                    // 'app_client_secret' => 'xxxyyyzzz',
+                    // 'user_pool_id' => 'userPool',
                 ]
             );
 
