@@ -1,6 +1,7 @@
 <?php
 
 use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient as AwsCognitoClient;
+use Aws\Sts\StsClient as AwsStsClient;
 use Aws\Exception\AwsException as AwsException;
 
 class OauthCognitoClient extends DbService
@@ -9,6 +10,7 @@ class OauthCognitoClient extends DbService
     public $_logging = [];
     public $_critical = false;
     public $_tokenIssuer;
+    public $_user_pool;
 
     public function makeWarningsCritical()
     {
@@ -81,8 +83,8 @@ class OauthCognitoClient extends DbService
         }
     }
 
-
-
+    // This is an user-token action for 'own' details
+    // As such, it proxies as a token validator
     public function getUserByAccessToken($accessToken)
     {
         try {
@@ -102,41 +104,131 @@ class OauthCognitoClient extends DbService
         } catch (Exception $ex) {
             $this->makeWarningsSafe();
             $results = "Internal, network or access error";
-            $this->failHandler(['From' => "Cognito", 'Failed' => "Configuration", 'Info' => $results]);
+            $this->failHandler(['From' => "Cognito", 'Failed' => "User By Token", 'Info' => $results]);
             return null;
         }
     }
 
-    public function searchUserAttributes($attributes, $find)
+
+    // This is an user-token action for 'own' details
+    // As such, it proxies as a token validator
+    public function putNewUserWithGlobalId($userDetails)
     {
-        foreach ($attributes as $att) {
-            if ($att['Name'] == $find) {
-                return $att['Value'];
-            }
+        if (empty($userDetails['username']) || empty($userDetails['email']) || empty($userDetails['id'])) {
+            return null;
         }
-        return null;
+
+        try {
+            $this->makeWarningsCritical();
+
+            $results = $this->_system->adminCreateUser([
+                'UserPoolId' => $this->_user_pool,
+                'DesiredDeliveryMediums' => ["EMAIL"], // make sure no SMS!
+                'MessageAction' => "SUPPRESS", // block email anyway
+
+                'Username' => $userDetails['username'],
+                'UserAttributes' => [
+                    ['Name' => "custom:global_user_id", 'Value' => strval($userDetails['id'])],
+                    ['Name' => "email", 'Value' => $userDetails['email']],
+                ],
+            ]);
+
+            $this->makeWarningsSafe();
+
+            if (empty($results)) {
+                return null;
+            }
+
+            return $results;
+        } catch (Exception $ex) {
+            $this->makeWarningsSafe();
+            $results = "Internal, network or access error";
+            $this->failHandler(['From' => "Cognito", 'Failed' => "User Creation", 'Info' => $results]);
+            return null;
+        }
     }
 
-    public function getSystem()
+
+    public function setUserPasswordByUserName($username, $setPassword)
+    {
+        if (empty($username) || empty($setPassword)) {
+            return null;
+        }
+
+        try {
+            $this->makeWarningsCritical();
+
+            $results = $this->_system->adminSetUserPassword([
+                'Password' => $setPassword, // REQUIRED
+                'Permanent' => true,
+                'UserPoolId' => $this->_user_pool, // REQUIRED
+                'Username' => $username, // REQUIRED
+            ]);
+
+            $this->makeWarningsSafe();
+
+            if (empty($results)) {
+                return null;
+            }
+
+            return $results;
+        } catch (Exception $ex) {
+            $this->makeWarningsSafe();
+            $results = "Internal, network or access error";
+            $this->failHandler(['From' => "Cognito", 'Failed' => "Set User Password", 'Info' => $results]);
+            return null;
+        }
+    }
+
+
+    // This is an admin action, by role, to retrieve user (if exists)
+    public function getUserByUsername($userName)
     {
         try {
             $this->makeWarningsCritical();
 
-            // get aws client system
-            $CognitoClient =  new AwsCognitoClient(
+            $results = $this->_system->adminGetUser([
+                'UserPoolId' => $this->_user_pool, // REQUIRED
+                'Username' => $userName, // REQUIRED
+            ]);
+            $this->makeWarningsSafe();
+
+            if (empty($results)) {
+                return null;
+            }
+
+            return $results;
+        } catch (AwsException $ex) {
+            $this->makeWarningsSafe();
+            if ($ex->getAwsErrorCode() == "UserNotFoundException") {
+                return null;
+            }
+
+            $results = "Internal, network or access error";
+            $this->failHandler(['From' => "Cognito", 'Failed' => "Details By User", 'Info' => $results]);
+            return null;
+        }
+    }
+
+    public function getSystem($forUserPool = null)
+    {
+        try {
+            $this->makeWarningsCritical();
+
+            $args =
                 [
-                    //  'credentials' => [
-                    //     'key' => '',
-                    //     'secret' => '+',
-                    // ],
+                   
                     'region' => 'ap-southeast-2',
                     'version' => 'latest',
 
+                    // we don't expect to need these, as can specify on further SDK/API calls as made
                     // 'app_client_id' => 'xxxyyyzzz',
                     // 'app_client_secret' => 'xxxyyyzzz',
                     // 'user_pool_id' => 'userPool',
-                ]
-            );
+                ];
+
+            // get aws client system
+            $CognitoClient =  new AwsCognitoClient($args);
 
             $this->makeWarningsSafe();
 
@@ -144,6 +236,7 @@ class OauthCognitoClient extends DbService
                 return null;
             }
             $this->_system = $CognitoClient;
+            $this->_user_pool = $forUserPool;
             return $this->_system;
         } catch (Exception $ex) {
             $this->makeWarningsSafe();

@@ -117,8 +117,8 @@ class CognitoFlowService extends DbService
             return null;
         }
 
-        $tokenSet['email'] = $cognito->searchUserAttributes(($tokenSet['user_data']['UserAttributes'] ?? null), 'email');
-        $tokenSet['auth_user'] = $cognito->searchUserAttributes(($tokenSet['user_data']['UserAttributes'] ?? null), 'custom:global_user_id');
+        $tokenSet['email'] = $this->searchUserAttributes(($tokenSet['user_data']['UserAttributes'] ?? null), 'email');
+        $tokenSet['auth_user'] = $this->searchUserAttributes(($tokenSet['user_data']['UserAttributes'] ?? null), 'custom:global_user_id');
 
         // Usefully returns: [ "access_token" => ..... , "user_data" => as_below , "email" => ifFound]
         return $tokenSet;
@@ -138,6 +138,52 @@ class CognitoFlowService extends DbService
         return $userData;
     }
 
+
+    // Usefully returns:  [" Username" => string, "UserAttributes" => [] ]
+    public function getUserDataByUsername($username, $inUserPool)
+    {
+        $cognito = new OauthCognitoClient($this->w);
+        $cognito->getSystem($inUserPool);
+        $userValid =  $cognito->getUserByUsername($username);
+        if (empty($userValid) || ($cognito->failCount() > 0)) {
+            return null;
+        }
+        $userData = ($userValid->toArray()) ?? null;
+
+        return $userData;
+    }
+
+
+    public function setUserPasswordByUsername($username, $password, $inUserPool)
+    {
+        if (empty($username) || empty($password) || empty($inUserPool) ) {
+            return false;
+        }
+        
+        $cognito = new OauthCognitoClient($this->w);
+        $cognito->getSystem($inUserPool);
+        $userExists=  $cognito->getUserByUsername($username);
+        if (empty($userExists) || ($cognito->failCount() > 0)) {
+            return false;
+        }
+
+        $userChange = $cognito->setUserPasswordByUserName($username, $password);
+        if ( $cognito->failCount() > 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function searchUserAttributes($attributes, $find)
+    {
+        foreach (($attributes ?? []) as $att) {
+            if ($att['Name'] == $find) {
+                return $att['Value'];
+            }
+        }
+        return null;
+    }
     // We can live without this, if we rely on GetUser as essential validation...
     // public function getCognitoJwtSignatureCheck($jwt)
     // {
