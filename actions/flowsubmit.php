@@ -45,7 +45,7 @@ function flowsubmit_ALL(Web $w)
             // the app's config PHP might want this to be a cmfive login! (piggybacked on token)
             if ($app['login'] ?? null) {
                 $sessionUser = AuthService::getInstance($w)->getUser($check['auth_user'] ?? null);
-                if (empty($sessionUser) || strtoupper(($sessionUser->login) !== strtoupper($payload["username"]))) {
+                if (empty($sessionUser) || (strtoupper($sessionUser->login) !== strtoupper($payload["username"]))) {
                     ApiOutputService::getInstance($w)->apiFailMessage("oauth flow response", "Flow is invalid");
                 }
                 AuthService::getInstance($w)->forceLogin($sessionUser->id);
