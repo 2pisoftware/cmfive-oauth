@@ -24,7 +24,7 @@ function flowsubmit_ALL(Web $w)
         ]
     );
 
-    foreach ($asserted as $check) {
+    foreach (($asserted ?? []) as $check) {
         if (!empty($check['access_token'])) {
 
             $appCheck = TokensService::getInstance($w)->getAppFromJwtPayload($check['access_token']);
@@ -41,11 +41,11 @@ function flowsubmit_ALL(Web $w)
                 "flow" => $check,
                 "payload" => $payload
             ];
-            
+
             // the app's config PHP might want this to be a cmfive login! (piggybacked on token)
-            if ($app['login']) {
+            if ($app['login'] ?? null) {
                 $sessionUser = AuthService::getInstance($w)->getUser($check['auth_user'] ?? null);
-                if (empty($sessionUser) || ($sessionUser->login !== $payload["username"])) {
+                if (empty($sessionUser) || strtoupper(($sessionUser->login) !== strtoupper($payload["username"]))) {
                     ApiOutputService::getInstance($w)->apiFailMessage("oauth flow response", "Flow is invalid");
                 }
                 AuthService::getInstance($w)->forceLogin($sessionUser->id);

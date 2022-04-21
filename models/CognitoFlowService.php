@@ -97,6 +97,7 @@ class CognitoFlowService extends DbService
                 . "/oauth2/token",
             $appAuth
         );
+        
         $issued = $cognito->getIssuedToken([
             'client_id' => $known->app_id,
             'client_secret' => ((empty($app['client_secret'])) ? "" :  $app['client_secret']),

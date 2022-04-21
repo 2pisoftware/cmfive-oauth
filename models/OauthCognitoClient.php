@@ -217,7 +217,7 @@ class OauthCognitoClient extends DbService
 
             $args =
                 [
-                   
+                    
                     'region' => 'ap-southeast-2',
                     'version' => 'latest',
 
