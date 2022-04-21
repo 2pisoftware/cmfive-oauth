@@ -45,7 +45,11 @@ class CognitoFlowService extends DbService
         $this->w->redirect(
             "https://"
                 . ($app['domain'] ?? "")
-                . "/oauth2/authorize?client_id="
+                 // This is correct ... but will skip hosted login_UI if browser holds (previous) Cognito cookies!
+                 // = is very bad, if a new cmfive user has meantime logged in
+                // . "/oauth2/authorize?client_id="
+                 // On the other hand, this is 'wrong' endpoint for oauth, BUT will always demand a login :)
+                . "/logout?client_id="
                 . $requested['app_id']
                 . "&response_type=code"
                 . "&redirect_uri=" . ($app['callback'] ?? null)
