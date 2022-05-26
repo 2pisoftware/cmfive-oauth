@@ -129,6 +129,53 @@ class CognitoFlowService extends DbService
         return $tokenSet;
     }
 
+    public function attemptCognitoRefresh($refreshToken, $appId)
+    {
+        $app = OauthFlowService::getInstance($this->w)->getOauthAppByProvider("cognito", $appId);
+        if (empty($app)) {
+            return null;
+        }
+
+        $cognito = new OauthCognitoClient($this->w);
+        $appAuth = (empty($app['client_secret']))
+            ? null
+            : TokensService::getInstance($this->w)->getBase64URL($appId . ":" . $app['client_secret']);
+
+        $cognito->getTokenIssuer(
+            "https://"
+                . ($app['domain'] ?? "")
+                . "/oauth2/token",
+            $appAuth
+        );
+        
+        $issued = $cognito->getIssuedToken([
+            'client_id' => $appId,
+            'client_secret' => ((empty($app['client_secret'])) ? "" :  $app['client_secret']),
+            'grant_type' => "refresh_token",
+            'redirect_uri' => $app['callback'],
+            'refresh_token' => $refreshToken,
+        ]);
+
+        if ($cognito->failCount() > 0) {
+            return null;
+        }
+
+        $tokenSet = json_decode($issued, true);
+        $tokenSet['user_data'] = $this->getUserDataByTokenValid($tokenSet['access_token']);
+
+        if (empty($tokenSet['user_data']['Username'])) {
+            return null;
+        }
+
+        $tokenSet['email'] = $this->searchUserAttributes(($tokenSet['user_data']['UserAttributes'] ?? null), 'email');
+        $tokenSet['auth_user'] = $this->searchUserAttributes(($tokenSet['user_data']['UserAttributes'] ?? null), 'custom:global_user_id');
+
+        // Usefully returns: [ "access_token" => ..... , "user_data" => as_below , "email" => ifFound]
+        return $tokenSet;
+    }
+
+
+
     // Usefully returns:  [" Username" => string, "UserAttributes" => [] ]
     public function getUserDataByTokenValid($accessToken)
     {
