@@ -110,8 +110,7 @@ class OauthCognitoClient extends DbService
     }
 
 
-    // This is an user-token action for 'own' details
-    // As such, it proxies as a token validator
+    // This is an ADMIN action
     public function putNewUserWithGlobalId($userDetails)
     {
         if (empty($userDetails['username']) || empty($userDetails['email']) || empty($userDetails['id'])) {
@@ -148,6 +147,33 @@ class OauthCognitoClient extends DbService
         }
     }
 
+    
+    // This is an ADMIN action
+    public function revokeAccessToken($refreshToken, $clientId, $clientSecret)
+    {
+        try {
+            $this->makeWarningsCritical();
+
+            $results = $this->_system->revokeToken([
+                'ClientId' => $clientId, // REQUIRED
+                'ClientSecret' => $clientSecret,
+                'Token' => $refreshToken, // REQUIRED
+            ]);
+
+            $this->makeWarningsSafe();
+
+            if (empty($results)) {
+                return null;
+            }
+
+            return $results;
+        } catch (Exception $ex) {
+            $this->makeWarningsSafe();
+            $results = "Internal, network or access error";
+            $this->failHandler(['From' => "Cognito", 'Failed' => "Token Revocation", 'Info' => $results]);
+            return null;
+        }
+    }
 
     public function setUserPasswordByUserName($username, $setPassword)
     {

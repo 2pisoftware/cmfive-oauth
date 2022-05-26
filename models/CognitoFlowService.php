@@ -180,6 +180,23 @@ class CognitoFlowService extends DbService
         return true;
     }
 
+    
+    public function revokeAccessByRefreshToken($token, $app, $secret)
+    {
+        if (empty($token) || empty($app) || empty($secret) ) {
+            return false;
+        }
+        
+        $cognito = new OauthCognitoClient($this->w);
+        $cognito->getSystem($inUserPool);
+        $cognito->revokeAccessToken($token, $app, $secret);
+        if ( $cognito->failCount() > 0) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function searchUserAttributes($attributes, $find)
     {
         foreach (($attributes ?? []) as $att) {

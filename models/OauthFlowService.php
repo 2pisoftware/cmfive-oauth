@@ -23,7 +23,7 @@ class OauthFlowService extends DbService
         foreach ($providers as $provider) {
             if (!empty($provider[$app])) {
                 $pack = $provider[$app];
-                $pack['provider'] = $provider;
+                $pack['provider'] = $app;
                 return $pack;
             }
         }
