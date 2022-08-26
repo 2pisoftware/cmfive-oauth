@@ -284,7 +284,7 @@ class OauthCognitoClient extends DbService
 
             $message = "Oauth Module (" . $From . ") failed for " . $Failed . ": " . $Info;
         }
-        $this->w->Log->error($message);
+        LogService::getInstance($this->w)->error($message);
         $this->_logging[] = $message;
     }
 
@@ -302,6 +302,6 @@ class OauthCognitoClient extends DbService
         foreach ($this->_logging as $logged) {
             $message .= $logged . " <br> \n";
         }
-        $this->w->Mail->sendMail($to, $replyto, $subject, $message);
+        MailService::getInstance($this->w)->sendMail($to, $replyto, $subject, $message);
     }
 }
