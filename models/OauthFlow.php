@@ -36,11 +36,4 @@ class OauthFlow extends DbObject
         parent::insert();
     }
 
-/*
- "hostname"  => getenv('DB_HOST') ? : "mysqldb",
-    "port" => '3306',
-    "username"  => getenv('DB_USERNAME') ? : "cm5",
-    "password"  => getenv('DB_PASSWORD') ? : "cm5MySQL",
-    "database"  => getenv('DB_DATABASE') ? : "cm5code",
-    */
 }
